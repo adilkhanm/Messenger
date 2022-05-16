@@ -17,17 +17,33 @@ class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-//        let user = NetworkController.getUser()
-//        data = []
-//        if let user = user {
-//            data = [user.firstname, user.lastname, "Log Out"]
-//        }
-        
-        data = ["Log Out"]
-        
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.tableHeaderView = createTableViewHeader()
+        
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        self.data = ["Log Out"]
+        self.tableView.reloadData()
+        
+        NetworkController.getUser() { result in
+            guard let user = result as? User else { return }
+            self.data = [user.firstname, user.lastname, "Log Out"]
+            self.tableView.reloadData()
+        }
+    }
+    
+    func createTableViewHeader() -> UIView? {
+        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: self.view.width, height: 300))
+        headerView.backgroundColor = .white
+        let imageView = Utilities.getProfilePictureView()
+        
+        imageView.frame = CGRect(x: (view.width - 150) / 2, y: 75, width: 150, height: 150)
+        imageView.layer.cornerRadius = imageView.width / 2
+        headerView.addSubview(imageView)
+        return headerView
     }
     
     private func didTapLogout() {
@@ -65,6 +81,9 @@ extension ProfileViewController: UITableViewDelegate, UITableViewDataSource {
         if indexPath.row == data.count - 1 {
             cell.textLabel?.textAlignment = .center
             cell.textLabel?.textColor = .red
+        } else {
+            cell.textLabel?.textAlignment = .left
+            cell.textLabel?.textColor = .black
         }
         return cell
     }

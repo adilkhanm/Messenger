@@ -7,24 +7,72 @@
 
 import UIKit
 import FirebaseAuth
+import JGProgressHUD
 
 class MainViewController: UIViewController {
+    
+    private let spinner = JGProgressHUD(style: .dark)
+    public var otherUsers: [User] = []
+    public var messages: [MyMessage?] = []
+    public var order: [Int] = []
     
     @IBOutlet weak var tableView: UITableView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        tableView.register(ConversationTableViewCell.self, forCellReuseIdentifier: ConversationTableViewCell.identifier)
+        tableView.delegate = self
+        tableView.dataSource = self
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
-        tableView.delegate = self
-        tableView.dataSource = self
-        
         validateAuth()
+        self.tableView.reloadData()
+        
+        NetworkController.getUsers() { result in
+            guard let users = result as? [User],
+                  let uid = Auth.auth().currentUser?.uid else {
+                return
+            }
+            
+            var other: [User] = []
+            var messages: [MyMessage?] = []
+            var order: [Int] = []
+            for user in users {
+                if user.uid != uid {
+                    let index = other.count
+                    other.append(user)
+                    messages.append(nil)
+                    order.append(index)
+                    
+                    NetworkController.getLastMessage(with: user.uid) { message in
+                        messages[index] = message
+                    }
+                }
+            }
+            
+            self.order = order.sorted(by: {
+                if messages[$0] == nil && messages[$1] == nil {
+                    return $0 < $1
+                } else if messages[$0] == nil {
+                    return false
+                } else if messages[$1] == nil {
+                    return true
+                } else {
+                    return messages[$0]!.date > messages[$1]!.date
+                }
+            })
+            
+            print("DATE: \(messages[self.order[0]]?.date)")
+            print("DATE: \(messages[self.order[1]]?.date)")
+            
+            self.otherUsers = other
+            self.messages = messages
+            self.tableView.reloadData()
+        }
     }
     
     private func validateAuth() {
@@ -39,13 +87,28 @@ class MainViewController: UIViewController {
 }
 
 extension MainViewController: UITableViewDelegate, UITableViewDataSource {
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
+        let cell = tableView.dequeueReusableCell(withIdentifier: ConversationTableViewCell.identifier, for: indexPath)
+        cell.textLabel?.text = "\(otherUsers[indexPath.row].firstname) \(otherUsers[indexPath.row].lastname)"
+        cell.accessoryType = .disclosureIndicator
+        return cell
     }
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        <#code#>
+        return otherUsers.count
     }
     
-    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        let chatVC = ChatViewController(with: otherUsers[indexPath.row].uid)
+        
+        let index = self.order[indexPath.row]
+        
+        chatVC.title = "\(otherUsers[index].firstname) \(otherUsers[index].lastname)"
+        chatVC.navigationItem.largeTitleDisplayMode = .never
+        navigationController?.pushViewController(chatVC, animated: true)
+    }
+
 }

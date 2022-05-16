@@ -65,4 +65,22 @@ class Utilities {
         return button
     }
     
+    static func getProfilePictureView() -> UIImageView {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "person.circle")
+        imageView.tintColor = .gray
+        imageView.contentMode = .scaleAspectFit
+        imageView.layer.masksToBounds = true
+        imageView.layer.borderWidth = 2
+        imageView.layer.borderColor = UIColor.lightGray.cgColor
+        return imageView
+    }
+    
+    public static var dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .long
+        formatter.locale = .current
+        return formatter
+    }()
 }

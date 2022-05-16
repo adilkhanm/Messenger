@@ -42,7 +42,6 @@
         <!--Profile-->
         <scene sceneID="knh-bs-h84">
             <objects>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="600-Tq-ZeW" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
                 <navigationController id="dbT-wL-1i1" sceneMemberID="viewController">
                     <tabBarItem key="tabBarItem" title="Profile" id="qNk-JB-DKf"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" largeTitles="YES" id="JLd-4s-n2J">
@@ -53,6 +52,7 @@
                         <segue destination="DOJ-AP-ZXb" kind="relationship" relationship="rootViewController" id="2X2-4K-Qvd"/>
                     </connections>
                 </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="600-Tq-ZeW" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="30" y="777"/>
         </scene>

@@ -8,8 +8,11 @@
 import UIKit
 import FirebaseAuth
 import FirebaseFirestore
+import JGProgressHUD
 
 class SignupViewController: UIViewController {
+    
+    private let spinner = JGProgressHUD(style: .dark)
 
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -17,16 +20,7 @@ class SignupViewController: UIViewController {
         return scrollView
     }()
     
-    private let profileImageView: UIImageView = {
-        let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "person.circle")
-        imageView.tintColor = .gray
-        imageView.contentMode = .scaleAspectFit
-        imageView.layer.masksToBounds = true
-        imageView.layer.borderWidth = 2
-        imageView.layer.borderColor = UIColor.lightGray.cgColor
-        return imageView
-    }()
+    private let profileImageView: UIImageView = Utilities.getProfilePictureView()
     
     private let firstnameTextField: UITextField = Utilities.createTextField(placeholder: "First name")
     private let lastnameTextField: UITextField = Utilities.createTextField(placeholder: "Last name")
@@ -80,24 +74,30 @@ class SignupViewController: UIViewController {
             return
         }
         
+        spinner.show(in: view)
+        
         Auth.auth().createUser(withEmail: email, password: password) { [weak self] (result, error) in
             guard let strongSelf = self else {
                 return
             }
             
+            DispatchQueue.main.async {
+                strongSelf.spinner.dismiss(animated: true)
+            }
+            
             if error != nil {
                 strongSelf.alertError(message: "Error creating user!")
             } else {
-                let db = Firestore.firestore()
+//                let db = Firestore.firestore()
                 
-                db.collection("users").addDocument(data: [
-                    "firstname":firstname,
-                    "lastname":lastname,
-                    "uid": result!.user.uid ]) { (error) in
-                        if error != nil {
-                            strongSelf.alertError(message: "Error saving user data!")
-                        }
+                let new_user = User(firstname: firstname, lastname: lastname, uid: result!.user.uid)
+                NetworkController.post(user: new_user) { error in
+                    if error != nil {
+                        strongSelf.alertError(message: "Error saving user data!")
                     }
+                }
+                
+                UserDefaults.standard.set(result!.user.uid, forKey: "uid")
                 
                 strongSelf.navigationController?.dismiss(animated: true)
             }
