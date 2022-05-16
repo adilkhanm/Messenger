@@ -87,7 +87,7 @@ struct Conversation: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: ConversationKeys.self)
         let fieldContainer = try container.nestedContainer(keyedBy: FieldKeys.self, forKey: .fields)
-        debugPrint("Field Container: \(fieldContainer.allKeys)")
+//        debugPrint("Field Container: \(fieldContainer.allKeys)")
         
         let membersArrayContainer = try fieldContainer.nestedContainer(keyedBy: ArrayKeys.self, forKey: .members)
         let messagesArrayContainer = try fieldContainer.nestedContainer(keyedBy: ArrayKeys.self, forKey: .messages)

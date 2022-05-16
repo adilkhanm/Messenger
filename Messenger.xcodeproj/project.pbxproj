@@ -98,7 +98,6 @@
 		A24B1302282FC5D20098C6CC /* Messenger */ = {
 			isa = PBXGroup;
 			children = (
-				A2F478E028314A6400CDD7D5 /* ViewModel */,
 				A2F478DE28314A4C00CDD7D5 /* Model */,
 				A2F478DF28314A5200CDD7D5 /* View */,
 				A2F478DD28314A4600CDD7D5 /* Controller */,
@@ -139,13 +138,6 @@
 				A2F478FB28329A7D00CDD7D5 /* ConversationTableViewCell.swift */,
 			);
 			path = View;
-			sourceTree = "<group>";
-		};
-		A2F478E028314A6400CDD7D5 /* ViewModel */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = ViewModel;
 			sourceTree = "<group>";
 		};
 		A2F478E128314A6F00CDD7D5 /* Other */ = {

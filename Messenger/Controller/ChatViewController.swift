@@ -17,7 +17,6 @@ struct Message: MessageType {
 }
 
 struct Sender: SenderType {
-//    var photoUrl: String
     public var senderId: String
     public var displayName: String
 }
@@ -25,6 +24,7 @@ struct Sender: SenderType {
 class ChatViewController: MessagesViewController {
     
     public let otherUserUid: String
+    public let otherUser: User
     
     private var messages = [Message]()
     
@@ -32,10 +32,17 @@ class ChatViewController: MessagesViewController {
         guard let uid = UserDefaults.standard.value(forKey: "uid") as? String else { return nil }
         return Sender(senderId: uid, displayName: "You")
     }
+    
+    private var otherSender: Sender? {
+        return Sender(senderId: otherUserUid, displayName: otherUser.firstname)
+    }
 
-    init(with uid: String) {
+    init(with uid: String, user: User) {
         self.otherUserUid = uid
+        self.otherUser = user
         super.init(nibName: nil, bundle: nil)
+        
+        fetchMessages()
     }
     
     required init?(coder: NSCoder) {
@@ -51,6 +58,27 @@ class ChatViewController: MessagesViewController {
         messageInputBar.delegate = self
     }
     
+    func fetchMessages() {
+        self.messages = []
+        NetworkController.getConversation(with: otherUserUid) { [weak self] conversation in
+            var allmessages: [Message] = []
+            if let conversation = conversation {
+                let mymessages = conversation.messages
+                for message in mymessages {
+                    allmessages.append(Message(sender: (message.from == self?.otherUserUid ? self?.otherSender : self?.selfSender)!,
+                                               messageId: "\(message.from)_\(message.text)_\(message.date)",
+                                               sentDate: Date(),
+                                               kind: .text(message.text)))
+                }
+            }
+            
+            self?.messages = allmessages
+            DispatchQueue.main.async {
+                self?.messagesCollectionView.reloadData()
+            }
+        }
+    }
+    
 }
 
 extension ChatViewController: InputBarAccessoryViewDelegate {
@@ -64,25 +92,32 @@ extension ChatViewController: InputBarAccessoryViewDelegate {
         
         let message = Message(sender: selfSender, messageId: messageId, sentDate: Date(), kind: .text(text))
         
-        print("message => \(message)")
-        
         NetworkController.conversationExists(with: otherUserUid) { exists in
             if exists == false {
-                NetworkController.createNewConversation(with: self.otherUserUid, firstMessage: message) { success in
+                NetworkController.createNewConversation(with: self.otherUserUid, firstMessage: message) { [weak self] success in
                     if success {
                         print("message is sent")
                     } else {
                         print("message was not sent")
                     }
+                    self?.messages.append(message)
+                    self?.messagesCollectionView.reloadData()
                 }
             } else {
-                NetworkController.sendMessage(to: self.otherUserUid, message: message) { success in
-                    if success {
-                        print("message is sent")
-                    } else {
-                        print("message was not sent")
+                NetworkController.getConversationId(with: self.otherUserUid) { conversationUid in
+                    if let conversationUid = conversationUid {
+                        NetworkController.sendMessage(to: conversationUid, newMessage: message) { [weak self] success in
+                            if success {
+                                print("message is sent")
+                            } else {
+                                print("message was not sent")
+                            }
+                            self?.messages.append(message)
+                            self?.messagesCollectionView.reloadData()
+                        }
                     }
                 }
+                
             }
         }
     }
@@ -110,7 +145,7 @@ extension ChatViewController: MessagesDataSource, MessagesLayoutDelegate, Messag
     }
     
     func numberOfSections(in messagesCollectionView: MessagesCollectionView) -> Int {
-        messages.count
+        return messages.count
     }
     
     

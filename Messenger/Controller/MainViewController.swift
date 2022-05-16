@@ -66,8 +66,8 @@ class MainViewController: UIViewController {
                 }
             })
             
-            print("DATE: \(messages[self.order[0]]?.date)")
-            print("DATE: \(messages[self.order[1]]?.date)")
+//            print("DATE: \(String(describing: messages[self.order[0]]?.date))")
+//            print("DATE: \(String(describing: messages[self.order[1]]?.date))")
             
             self.otherUsers = other
             self.messages = messages
@@ -89,9 +89,9 @@ class MainViewController: UIViewController {
 extension MainViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ConversationTableViewCell.identifier, for: indexPath)
-        cell.textLabel?.text = "\(otherUsers[indexPath.row].firstname) \(otherUsers[indexPath.row].lastname)"
-        cell.accessoryType = .disclosureIndicator
+        let cell = tableView.dequeueReusableCell(withIdentifier: ConversationTableViewCell.identifier, for: indexPath) as! ConversationTableViewCell
+        let index = self.order[indexPath.row]
+        cell.configure(with: otherUsers[index])
         return cell
     }
 
@@ -102,13 +102,16 @@ extension MainViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         
-        let chatVC = ChatViewController(with: otherUsers[indexPath.row].uid)
-        
         let index = self.order[indexPath.row]
+        let chatVC = ChatViewController(with: otherUsers[index].uid, user: otherUsers[index])
         
         chatVC.title = "\(otherUsers[index].firstname) \(otherUsers[index].lastname)"
         chatVC.navigationItem.largeTitleDisplayMode = .never
         navigationController?.pushViewController(chatVC, animated: true)
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 120
     }
 
 }

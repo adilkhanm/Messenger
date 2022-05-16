@@ -74,6 +74,20 @@ class NetworkController {
 // MARK: - Getting & Sending messages
 extension NetworkController {
     
+    public static func getConversationId(with otherUserUid: String, completion: @escaping (String?) -> Void) {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let db = Firestore.firestore()
+        db.collection(CONVERSATIONS).whereField("members", in: [[otherUserUid, uid], [uid, otherUserUid]]).getDocuments() { (result, error) in
+            if error != nil || result!.documents.count == 0 {
+                print("\n\n\nNOT FOUND ID\n\n\n")
+                completion(nil)
+            } else {
+                print("\n\n\nID IS FOUND => \(result!.documents[0].documentID)!!!\n\n\n")
+                completion(result!.documents[0].documentID)
+            }
+        }
+    }
+    
     public static func getConversation(with otherUserUid: String, completion: @escaping (Conversation?) -> Void) {
         let url = BASE_URL + CONVERSATIONS
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -141,8 +155,28 @@ extension NetworkController {
         }
     }
     
-    public static func sendMessage(to conversation: String, message: Message, completion: @escaping (Bool) -> Void) {
+    public static func sendMessage(to conversationId: String, newMessage: Message, completion: @escaping (Bool) -> Void) {
+        guard let uid = UserDefaults.standard.value(forKey: "uid") else { return }
         
+        var message = ""
+        switch newMessage.kind {
+        case .text(let messageText):
+            message = messageText
+            break
+        default:
+            message = ""
+        }
+        
+        let db = Firestore.firestore()
+        let data: [String: Any] = [
+            "from":uid,
+            "text":message,
+            "date":Utilities.dateFormatter.string(from: Date())
+        ]
+        
+        db.collection(CONVERSATIONS).document(conversationId).updateData(["messages": FieldValue.arrayUnion([data])]) { error in
+            completion(error == nil)
+        }
     }
     
     
